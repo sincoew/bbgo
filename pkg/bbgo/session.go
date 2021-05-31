@@ -315,16 +315,10 @@ func (session *ExchangeSession) InitSymbols(ctx context.Context, environ *Enviro
 
 // initUsedSymbols uses usedSymbols to initialize the related data structure
 func (session *ExchangeSession) initUsedSymbols(ctx context.Context, environ *Environment) error {
-<<<<<<< HEAD
+	log.Infof("@ pkg/bbgo/session [initUsedSymbols] len= %d", len(session.usedSymbols))
 	for symbol := range session.usedSymbols {
 		if err := session.initSymbol(ctx, environ, symbol); err != nil {
-=======
 
-  log.Infof("@ pkg/bbgo/session [initUsedSymbols] len= %d", len(session.usedSymbols))
-  for symbol := range session.usedSymbols {
-		log.Infof("@ pkg/bbgo/session [ usedSymbols ]  = " + symbol)
-		if err := session.InitSymbol(ctx, environ, symbol); err != nil {
->>>>>>> add log
 			return err
 		}
 	}
@@ -332,22 +326,12 @@ func (session *ExchangeSession) initUsedSymbols(ctx context.Context, environ *En
 	return nil
 }
 
-<<<<<<< HEAD
+
 // initSymbol loads trades for the symbol, bind stream callbacks, init positions, market data store.
 // please note, initSymbol can not be called for the same symbol for twice
 func (session *ExchangeSession) initSymbol(ctx context.Context, environ *Environment, symbol string) error {
 	if _, ok := session.initializedSymbols[symbol]; ok {
-=======
-// InitSymbol loads trades for the symbol, bind stream callbacks, init positions, market data store.
-// please note, InitSymbol can not be called for the same symbol for twice
-func (session *ExchangeSession) InitSymbol(ctx context.Context, environ *Environment, symbol string) error {
-
-  log.Infof("@ pkg/bbgo/session [InitSymbol] ")
-
-  if _, ok := session.initializedSymbols[symbol]; ok {
-
-	log.Infof("@ pkg/bbgo/session [initializedSymbols is nil] ")
->>>>>>> add log
+		log.Infof("@ pkg/bbgo/session [InitSymbol] ")
 		// return fmt.Errorf("symbol %s is already initialized", symbol)
 		return nil
 	}
@@ -392,12 +376,10 @@ func (session *ExchangeSession) InitSymbol(ctx context.Context, environ *Environ
 		QuoteCurrency: market.QuoteCurrency,
 	}
 	position.AddTrades(trades)
-<<<<<<< HEAD
+
 	position.BindStream(session.UserDataStream)
 	session.positions[symbol] = position
-=======
-	position.BindStream(session.Stream)
->>>>>>> add log
+
 
   log.Infof("@ pkg/bbgo/session [ symbol = ] " + symbol )
 	session.positions[symbol] = position
@@ -481,7 +463,7 @@ func (session *ExchangeSession) StandardIndicatorSet(symbol string) (*StandardIn
 }
 
 func (session *ExchangeSession) Position(symbol string) (pos *Position, ok bool) {
-<<<<<<< HEAD
+	log.Infof("@ pkg/bbgo/session [ Positions ] len = %d " , len(session.positions) )
 	pos, ok = session.positions[symbol]
 	if ok {
 		return pos, ok
@@ -499,15 +481,7 @@ func (session *ExchangeSession) Position(symbol string) (pos *Position, ok bool)
 	}
 	ok = true
 	session.positions[symbol] = pos
-=======
-	
-  log.Infof("@ pkg/bbgo/session [ Positions ] len = %d " , len(session.positions) )
-  for p := range session.positions {
-	log.Infof("@ pkg/bbgo/session [ Positions ] len = %d " ,  p)
-  }
 
-  pos, ok = session.positions[symbol]
->>>>>>> add log
 	return pos, ok
 }
 
