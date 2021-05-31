@@ -251,6 +251,7 @@ func (s *Server) Run(ctx context.Context, bindArgs ...string) error {
 	r := s.newEngine()
 	bind := resolveBind(bindArgs)
 	if s.OpenInBrowser {
+		
 		openBrowser(ctx, bind)
 	}
 

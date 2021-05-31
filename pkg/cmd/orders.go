@@ -119,12 +119,17 @@ var executeOrderCmd = &cobra.Command{
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
+<<<<<<< HEAD
 
 		if userConfig == nil {
 			return errors.New("config file is required")
 		}
 
 		sessionName, err := cmd.Flags().GetString("session")
+=======
+		log.Infof("@ pkg/cmd/orders.go  listOrdersCmd [RunE] [placeorder]")
+		configFile, err := cmd.Flags().GetString("config")
+>>>>>>> add log
 		if err != nil {
 			return err
 		}
@@ -319,6 +324,7 @@ var submitOrderCmd = &cobra.Command{
 		}
 
 		so := types.SubmitOrder{
+<<<<<<< HEAD
 			ClientOrderID:  uuid.New().String(),
 			Symbol:         symbol,
 			Side:           types.SideType(ftx.TrimUpperString(side)),
@@ -331,6 +337,27 @@ var submitOrderCmd = &cobra.Command{
 			TimeInForce:    "GTC",
 		}
 
+=======
+			ClientOrderID: uuid.New().String(),
+			Symbol:        symbol,
+			Side:          types.SideType(ftx.TrimUpperString(side)),
+			Type:          types.OrderTypeLimit,
+			Quantity:      util.MustParseFloat(quantity),
+			QuantityString: quantity,
+			Price:         util.MustParseFloat(price),
+			PriceString: price,
+			Market:        types.Market{Symbol: symbol},
+			TimeInForce:   "GTC",
+		}
+		log.Infof("@ pkg/cmd/orders.go  [session.Exchange.SubmitOrders] Quantity=%f, price=%f", util.MustParseFloat(quantity), util.MustParseFloat(price))
+		// sof, err := session.FormatOrder(so)
+		// if err != nil {
+		// 	return err
+		// }
+		//so.QuantityString = "10"
+		//so.PriceString = "29"
+	
+>>>>>>> add log
 		co, err := session.Exchange.SubmitOrders(ctx, so)
 		if err != nil {
 			return err

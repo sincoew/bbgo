@@ -169,18 +169,26 @@ func (trader *Trader) SetRiskControls(riskControls *RiskControls) {
 
 func (trader *Trader) Subscribe() {
 	// pre-subscribe the data
-	for sessionName, strategies := range trader.exchangeStrategies {
-		session := trader.environment.sessions[sessionName]
+  fmt.Println("@@@@ Subscribe ")
+  
+  for sessionName, strategies := range trader.exchangeStrategies {
+		fmt.Println("@@@@ Subscribe sessionName =", sessionName)
+    session := trader.environment.sessions[sessionName]
 		for _, strategy := range strategies {
+      fmt.Println("@@@@ Subscribe strategy ...")
 			if subscriber, ok := strategy.(ExchangeSessionSubscriber); ok {
+        fmt.Println("@@@@ subscribe in ...")
 				subscriber.Subscribe(session)
 			} else {
+        fmt.Println("@@@@ Subscribe strategy error = id = ", strategy.ID())
 				log.Errorf("strategy %s does not implement ExchangeSessionSubscriber", strategy.ID())
 			}
 		}
 	}
 
-	for _, strategy := range trader.crossExchangeStrategies {
+  fmt.Println("@@@@ Subscribe end")
+	
+  for _, strategy := range trader.crossExchangeStrategies {
 		if subscriber, ok := strategy.(CrossExchangeSessionSubscriber); ok {
 			subscriber.CrossSubscribe(trader.environment.sessions)
 		} else {

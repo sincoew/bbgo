@@ -14,7 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
-
+"fmt"
 	"github.com/c9s/bbgo/pkg/bbgo"
 	"github.com/c9s/bbgo/pkg/cmd/cmdutil"
 	"github.com/c9s/bbgo/pkg/server"
@@ -43,6 +43,7 @@ var RunCmd = &cobra.Command{
 }
 
 func runSetup(baseCtx context.Context, userConfig *bbgo.Config, enableApiServer bool) error {
+	log.Infof("@ pkg/cmd/run [runSetup] enableApiServer = %v", enableApiServer)
 	ctx, cancelTrading := context.WithCancel(baseCtx)
 	defer cancelTrading()
 
@@ -118,33 +119,53 @@ func BootstrapEnvironment(ctx context.Context, environ *bbgo.Environment, userCo
 	return nil
 }
 
+<<<<<<< HEAD
 func runConfig(basectx context.Context, userConfig *bbgo.Config, enableWebServer bool, webServerBind string) error {
 	ctx, cancelTrading := context.WithCancel(basectx)
+=======
+func runConfig(basectx context.Context, userConfig *bbgo.Config, enableApiServer bool) error {
+	log.Infof("@ pkg/cmd/run [runConfig] enableApiServer = %v", enableApiServer)
+  ctx, cancelTrading := context.WithCancel(basectx)
+>>>>>>> add log
 	defer cancelTrading()
 
+  fmt.Println("@@@@ run start ")
 	environ := bbgo.NewEnvironment()
 	if err := BootstrapEnvironment(ctx, environ, userConfig); err != nil {
-		return err
+		fmt.Println("@@@@ run boot error ")
+    return err
 	}
+  fmt.Println("@@@@ run NewEnvironment end ")
 
 	if err := environ.Init(ctx); err != nil {
 		return err
 	}
 
 	if err := environ.Sync(ctx); err != nil {
-		return err
+    fmt.Println("@@@@ run env.sync error ")
+    return err
 	}
+
+  fmt.Println("@@@@ run environ.Sync end ")
 
 	trader := bbgo.NewTrader(environ)
 	if err := trader.Configure(userConfig); err != nil {
-		return err
+		fmt.Println("@@@@ run trader.config error ")
+    return err
 	}
+  fmt.Println("@@@@ run bbgo.NewTrader end ")
 
 	if err := trader.Run(ctx); err != nil {
-		return err
+		fmt.Println("@@@@ run trader error ")
+    return err
 	}
 
+<<<<<<< HEAD
 	if enableWebServer {
+=======
+	log.Infof("@ pkg/cmd/run [enableApiServer] = %v", enableApiServer)
+	if enableApiServer {
+>>>>>>> add log
 		go func() {
 			s := &server.Server{
 				Config:  userConfig,
@@ -170,7 +191,8 @@ func runConfig(basectx context.Context, userConfig *bbgo.Config, enableWebServer
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	setup, err := cmd.Flags().GetBool("setup")
+	 fmt.Println("@@@@ run @@@@")
+  setup, err := cmd.Flags().GetBool("setup")
 	if err != nil {
 		return err
 	}

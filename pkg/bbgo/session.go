@@ -31,7 +31,8 @@ type StandardIndicatorSet struct {
 }
 
 func NewStandardIndicatorSet(symbol string, store *MarketDataStore) *StandardIndicatorSet {
-	set := &StandardIndicatorSet{
+	 fmt.Println("NewStandardIndicatorSet")
+  set := &StandardIndicatorSet{
 		Symbol: symbol,
 		sma:    make(map[types.IntervalWindow]*indicator.SMA),
 		ewma:   make(map[types.IntervalWindow]*indicator.EWMA),
@@ -65,7 +66,8 @@ func NewStandardIndicatorSet(symbol string, store *MarketDataStore) *StandardInd
 // BOLL returns the bollinger band indicator of the given interval and the window,
 // Please note that the K for std dev is fixed and defaults to 2.0
 func (set *StandardIndicatorSet) BOLL(iw types.IntervalWindow, bandWidth float64) *indicator.BOLL {
-	inc, ok := set.boll[iw]
+	fmt.Println("BOLL")
+  inc, ok := set.boll[iw]
 	if !ok {
 		inc = &indicator.BOLL{IntervalWindow: iw, K: bandWidth}
 		inc.Bind(set.store)
@@ -77,7 +79,8 @@ func (set *StandardIndicatorSet) BOLL(iw types.IntervalWindow, bandWidth float64
 
 // SMA returns the simple moving average indicator of the given interval and the window size.
 func (set *StandardIndicatorSet) SMA(iw types.IntervalWindow) *indicator.SMA {
-	inc, ok := set.sma[iw]
+	fmt.Println("SMA")
+  inc, ok := set.sma[iw]
 	if !ok {
 		inc = &indicator.SMA{IntervalWindow: iw}
 		inc.Bind(set.store)
@@ -231,7 +234,9 @@ func NewExchangeSession(name string, exchange types.Exchange) *ExchangeSession {
 // Init initializes the basic data structure and market information by its exchange.
 // Note that the subscribed symbols are not loaded in this stage.
 func (session *ExchangeSession) Init(ctx context.Context, environ *Environment) error {
-	if session.IsInitialized {
+	log.Infof("@ pkg/bbgo/session [init exchange session]")
+  if session.IsInitialized {
+		log.Infof("@ pkg/bbgo/session [session is init]")
 		return ErrSessionAlreadyInitialized
 	}
 
@@ -310,8 +315,16 @@ func (session *ExchangeSession) InitSymbols(ctx context.Context, environ *Enviro
 
 // initUsedSymbols uses usedSymbols to initialize the related data structure
 func (session *ExchangeSession) initUsedSymbols(ctx context.Context, environ *Environment) error {
+<<<<<<< HEAD
 	for symbol := range session.usedSymbols {
 		if err := session.initSymbol(ctx, environ, symbol); err != nil {
+=======
+
+  log.Infof("@ pkg/bbgo/session [initUsedSymbols] len= %d", len(session.usedSymbols))
+  for symbol := range session.usedSymbols {
+		log.Infof("@ pkg/bbgo/session [ usedSymbols ]  = " + symbol)
+		if err := session.InitSymbol(ctx, environ, symbol); err != nil {
+>>>>>>> add log
 			return err
 		}
 	}
@@ -319,22 +332,38 @@ func (session *ExchangeSession) initUsedSymbols(ctx context.Context, environ *En
 	return nil
 }
 
+<<<<<<< HEAD
 // initSymbol loads trades for the symbol, bind stream callbacks, init positions, market data store.
 // please note, initSymbol can not be called for the same symbol for twice
 func (session *ExchangeSession) initSymbol(ctx context.Context, environ *Environment, symbol string) error {
 	if _, ok := session.initializedSymbols[symbol]; ok {
+=======
+// InitSymbol loads trades for the symbol, bind stream callbacks, init positions, market data store.
+// please note, InitSymbol can not be called for the same symbol for twice
+func (session *ExchangeSession) InitSymbol(ctx context.Context, environ *Environment, symbol string) error {
+
+  log.Infof("@ pkg/bbgo/session [InitSymbol] ")
+
+  if _, ok := session.initializedSymbols[symbol]; ok {
+
+	log.Infof("@ pkg/bbgo/session [initializedSymbols is nil] ")
+>>>>>>> add log
 		// return fmt.Errorf("symbol %s is already initialized", symbol)
 		return nil
 	}
 
 	market, ok := session.markets[symbol]
 	if !ok {
+  
+	log.Infof("@ pkg/bbgo/session [ session.markets  is nil] ")
 		return fmt.Errorf("market %s is not defined", symbol)
 	}
 
 	var err error
 	var trades []types.Trade
 	if environ.SyncService != nil {
+ 
+	log.Infof("@ pkg/bbgo/session [ environ.SyncService  is nil] ")
 		tradingFeeCurrency := session.Exchange.PlatformFeeCurrency()
 		if strings.HasPrefix(symbol, tradingFeeCurrency) {
 			trades, err = environ.TradeService.QueryForTradingFeeCurrency(session.Exchange.Name(), symbol, tradingFeeCurrency)
@@ -363,9 +392,16 @@ func (session *ExchangeSession) initSymbol(ctx context.Context, environ *Environ
 		QuoteCurrency: market.QuoteCurrency,
 	}
 	position.AddTrades(trades)
+<<<<<<< HEAD
 	position.BindStream(session.UserDataStream)
 	session.positions[symbol] = position
+=======
+	position.BindStream(session.Stream)
+>>>>>>> add log
 
+  log.Infof("@ pkg/bbgo/session [ symbol = ] " + symbol )
+	session.positions[symbol] = position
+  
 	orderStore := NewOrderStore(symbol)
 	orderStore.AddOrderUpdate = true
 
@@ -434,6 +470,7 @@ func (session *ExchangeSession) initSymbol(ctx context.Context, environ *Environ
 
 	log.Infof("%s last price: %f", symbol, session.lastPrices[symbol])
 
+    log.Infof("@ pkg/bbgo/session [ initializedSymbols .... ]  = " + symbol )
 	session.initializedSymbols[symbol] = struct{}{}
 	return nil
 }
@@ -444,6 +481,7 @@ func (session *ExchangeSession) StandardIndicatorSet(symbol string) (*StandardIn
 }
 
 func (session *ExchangeSession) Position(symbol string) (pos *Position, ok bool) {
+<<<<<<< HEAD
 	pos, ok = session.positions[symbol]
 	if ok {
 		return pos, ok
@@ -461,6 +499,15 @@ func (session *ExchangeSession) Position(symbol string) (pos *Position, ok bool)
 	}
 	ok = true
 	session.positions[symbol] = pos
+=======
+	
+  log.Infof("@ pkg/bbgo/session [ Positions ] len = %d " , len(session.positions) )
+  for p := range session.positions {
+	log.Infof("@ pkg/bbgo/session [ Positions ] len = %d " ,  p)
+  }
+
+  pos, ok = session.positions[symbol]
+>>>>>>> add log
 	return pos, ok
 }
 
@@ -508,7 +555,9 @@ func (session *ExchangeSession) OrderStores() map[string]*OrderStore {
 
 // Subscribe save the subscription info, later it will be assigned to the stream
 func (session *ExchangeSession) Subscribe(channel types.Channel, symbol string, options types.SubscribeOptions) *ExchangeSession {
-	if channel == types.KLineChannel && len(options.Interval) == 0 {
+
+  log.Infof("@ pkg/bbgo/session [ Subscribe ]  = " + symbol)
+  if channel == types.KLineChannel && len(options.Interval) == 0 {
 		panic("subscription interval for kline can not be empty")
 	}
 
@@ -525,6 +574,8 @@ func (session *ExchangeSession) Subscribe(channel types.Channel, symbol string, 
 }
 
 func (session *ExchangeSession) FormatOrder(order types.SubmitOrder) (types.SubmitOrder, error) {
+	log.Infof("@ pkg/bbgo/session.go [ FormatOrder ] ")
+	
 	market, ok := session.Market(order.Symbol)
 	if !ok {
 		return order, fmt.Errorf("market is not defined: %s", order.Symbol)

@@ -504,7 +504,8 @@ func (s *Strategy) Subscribe(session *bbgo.ExchangeSession) {
 }
 
 func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, session *bbgo.ExchangeSession) error {
-	// do some basic validation
+	
+  // do some basic validation
 	if s.GridNum == 0 {
 		s.GridNum = 10
 	}

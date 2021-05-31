@@ -302,6 +302,8 @@ func (e *Exchange) CancelOrders(ctx context.Context, orders ...types.Order) (err
 }
 
 func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
+	log.Infof("@ pkg/exchange/max/exchange.go [ toMaxSubmitOrder ] ")
+
 	symbol := toLocalSymbol(o.Symbol)
 	orderType, err := toLocalOrderType(o.Type)
 	if err != nil {
@@ -311,6 +313,9 @@ func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
 	clientOrderID := NewClientOrderID(o.ClientOrderID)
 
 	volumeInString := o.QuantityString
+	//priceInString := o.PriceString
+	log.Infof("@ pkg/exchange/max/exchange.go [ toMaxSubmitOrder ] QuantityString=%s", o.QuantityString)
+
 	if len(volumeInString) == 0 {
 		if o.Market.Symbol != "" {
 			volumeInString = o.Market.FormatQuantity(o.Quantity)
@@ -318,12 +323,13 @@ func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
 			volumeInString = strconv.FormatFloat(o.Quantity, 'f', 8, 64)
 		}
 	}
+	log.Infof("@ pkg/exchange/max/exchange.go [ toMaxSubmitOrder ] volumeInString=%s", volumeInString)
 
 	maxOrder := maxapi.Order{
 		Market:    symbol,
 		Side:      toLocalSideType(o.Side),
 		OrderType: orderType,
-		// Price:     priceInString,
+		//Price:     priceInString,
 		Volume:    volumeInString,
 		GroupID:   o.GroupID,
 		ClientOID: clientOrderID,
@@ -406,9 +412,12 @@ func (e *Exchange) Withdrawal(ctx context.Context, asset string, amount fixedpoi
 }
 
 func (e *Exchange) SubmitOrders(ctx context.Context, orders ...types.SubmitOrder) (createdOrders types.OrderSlice, err error) {
+	log.Infof("@ pkg/exchange/max/exchange.go [ SubmitOrders ] ")
+
 	if len(orders) <= 10 {
 		var ordersBySymbol = map[string][]maxapi.Order{}
-		for _, o := range orders {
+		for i, o := range orders {
+			log.Infof("@ pkg/exchange/max/exchange.go [ SubmitOrders ] o= %d , Quantity=%f", i, o.Quantity)
 			maxOrder, err := toMaxSubmitOrder(o)
 			if err != nil {
 				return nil, err
@@ -418,9 +427,15 @@ func (e *Exchange) SubmitOrders(ctx context.Context, orders ...types.SubmitOrder
 		}
 
 		for symbol, orders := range ordersBySymbol {
+
+			log.Infof("@ pkg/exchange/max/exchange.go [ e.client.OrderService.NewCreateMultiOrderRequest ] ")
 			req := e.client.OrderService.NewCreateMultiOrderRequest()
 			req.Market(symbol)
 			req.AddOrders(orders...)
+			// logs
+			// for subO := range orders {
+			// 	log.Infof("@ pkg/exchange/max/exchange.go [ subO =] price=", subO.price)
+			// }
 
 			orderResponses, err := req.Do(ctx)
 			if err != nil {

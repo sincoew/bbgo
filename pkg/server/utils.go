@@ -8,7 +8,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/sirupsen/logrus"
+    "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 func getJSON(url string, data interface{}) error {
@@ -43,6 +44,7 @@ func filterStrings(slice []string, needle string) (ns []string) {
 }
 
 func openBrowser(ctx context.Context, bind string) {
+	log.Infof("@ pkg/server/utils [openBrowser] bind="+ bind)
 	if runtime.GOOS == "darwin" {
 		baseURL := "http://" + bind
 		go pingAndOpenURL(ctx, baseURL)
