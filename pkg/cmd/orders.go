@@ -320,7 +320,6 @@ var submitOrderCmd = &cobra.Command{
 		}
 
 		so := types.SubmitOrder{
-<<<<<<< HEAD
 			ClientOrderID:  uuid.New().String(),
 			Symbol:         symbol,
 			Side:           types.SideType(ftx.TrimUpperString(side)),
@@ -333,7 +332,7 @@ var submitOrderCmd = &cobra.Command{
 			TimeInForce:    "GTC",
 		}
 		log.Infof("@ pkg/cmd/orders.go  [session.Exchange.SubmitOrders] Quantity=%f, price=%f", util.MustParseFloat(quantity), util.MustParseFloat(price))
-	
+
 		co, err := session.Exchange.SubmitOrders(ctx, so)
 		if err != nil {
 			return err
