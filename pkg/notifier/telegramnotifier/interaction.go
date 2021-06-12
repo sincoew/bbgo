@@ -3,6 +3,7 @@ package telegramnotifier
 import (
 	"fmt"
 
+	"github.com/c9s/bbgo/pkg/version"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	"github.com/sirupsen/logrus"
@@ -105,7 +106,7 @@ func (it *Interaction) HandleAuth(m *telebot.Message) {
 		it.session.Owner = m.Sender
 		it.session.Chat = m.Chat
 
-		if _, err := it.bot.Send(m.Chat, fmt.Sprintf("Hi %s, I know you, I will send you the notifications!", m.Sender.Username)); err != nil {
+		if _, err := it.bot.Send(m.Chat, fmt.Sprintf("👋 Hi %s, nice to meet you. 🤝 I will send you the notifications!", m.Sender.Username)); err != nil {
 			log.WithError(err).Error("telegram send error")
 		}
 
@@ -121,7 +122,7 @@ func (it *Interaction) HandleAuth(m *telebot.Message) {
 			it.session.Owner = m.Sender
 			it.session.Chat = m.Chat
 
-			if _, err := it.bot.Send(m.Chat, fmt.Sprintf("Hi %s, I know you, I will send you the notifications!", m.Sender.Username)); err != nil {
+			if _, err := it.bot.Send(m.Chat, fmt.Sprintf("👋 Hi %s, nice to meet you. 🤝 I will send you the notifications!", m.Sender.Username)); err != nil {
 				log.WithError(err).Error("telegram send error")
 			}
 
@@ -148,7 +149,10 @@ func (it *Interaction) Start(session Session) {
 	it.session = &session
 
 	if it.session.Owner != nil && it.session.Chat != nil {
-		if _, err := it.bot.Send(it.session.Chat, fmt.Sprintf("Hi %s, I'm back", it.session.Owner.Username)); err != nil {
+		if _, err := it.bot.Send(it.session.Chat, fmt.Sprintf("👋 Hi %s, I'm back, this is version %s, good luck! 🖖",
+			it.session.Owner.Username,
+			version.Version,
+		)); err != nil {
 			log.WithError(err).Error("failed to send telegram message")
 		}
 	}

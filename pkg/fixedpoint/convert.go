@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 	"strconv"
 	"sync/atomic"
 )
@@ -55,7 +56,17 @@ func (v Value) String() string {
 }
 
 func (v Value) Int64() int64 {
-	return int64(v)
+	return int64(v.Float64())
+}
+
+func (v Value) Int() int {
+	return int(v.Float64())
+}
+
+// BigMul is the math/big version multiplication
+func (v Value) BigMul(v2 Value) Value {
+	x := new(big.Int).Mul(big.NewInt(int64(v)), big.NewInt(int64(v2)))
+	return Value(x.Int64() / DefaultPow)
 }
 
 func (v Value) Mul(v2 Value) Value {
@@ -80,6 +91,10 @@ func (v Value) DivFloat64(v2 float64) Value {
 
 func (v Value) Floor() Value {
 	return NewFromFloat(math.Floor(v.Float64()))
+}
+
+func (v Value) Ceil() Value {
+	return NewFromFloat(math.Ceil(v.Float64()))
 }
 
 func (v Value) Sub(v2 Value) Value {
@@ -292,7 +307,7 @@ func NumFractionalDigits(a Value) int {
 		numPow++
 	}
 	numZeros := 0
-	for v := a.Int64(); v%10 == 0; v /= 10 {
+	for v := int64(a); v%10 == 0; v /= 10 {
 		numZeros++
 	}
 	return numPow - numZeros

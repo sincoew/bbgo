@@ -67,9 +67,10 @@ type Strategy struct {
 	HedgeInterval       types.Duration `json:"hedgeInterval"`
 	OrderCancelWaitTime types.Duration `json:"orderCancelWaitTime"`
 
-	Margin    fixedpoint.Value `json:"margin"`
-	BidMargin fixedpoint.Value `json:"bidMargin"`
-	AskMargin fixedpoint.Value `json:"askMargin"`
+	Margin        fixedpoint.Value `json:"margin"`
+	BidMargin     fixedpoint.Value `json:"bidMargin"`
+	AskMargin     fixedpoint.Value `json:"askMargin"`
+	UseDepthPrice bool             `json:"useDepthPrice"`
 
 	EnableBollBandMargin bool             `json:"enableBollBandMargin"`
 	BollBandInterval     types.Interval   `json:"bollBandInterval"`
@@ -193,9 +194,14 @@ func (s *Strategy) updateQuote(ctx context.Context, orderExecutionRouter bbgo.Or
 		return
 	}
 
-	sourceBook := s.book.Copy()
+	bestBid, bestAsk, hasPrice := s.book.BestBidAndAsk()
+	if !hasPrice {
+		return
+	}
+
+	sourceBook := s.book.CopyDepth(20)
 	if valid, err := sourceBook.IsValid(); !valid {
-		log.WithError(err).Errorf("%s invalid order book, skip quoting: %v", s.Symbol, err)
+		log.WithError(err).Errorf("%s invalid copied order book, skip quoting: %v", s.Symbol, err)
 		return
 	}
 
@@ -280,10 +286,7 @@ func (s *Strategy) updateQuote(ctx context.Context, orderExecutionRouter bbgo.Or
 		return
 	}
 
-	bestBid, _ := sourceBook.BestBid()
 	bestBidPrice := bestBid.Price
-
-	bestAsk, _ := sourceBook.BestAsk()
 	bestAskPrice := bestAsk.Price
 	log.Infof("%s book ticker: best ask / best bid = %f / %f", s.Symbol, bestAskPrice.Float64(), bestBidPrice.Float64())
 
@@ -336,6 +339,8 @@ func (s *Strategy) updateQuote(ctx context.Context, orderExecutionRouter bbgo.Or
 		}
 	}
 
+	bidPrice := bestBidPrice
+	askPrice := bestAskPrice
 	for i := 0; i < s.NumLayers; i++ {
 		// for maker bid orders
 		if !disableMakerBid {
@@ -353,9 +358,11 @@ func (s *Strategy) updateQuote(ctx context.Context, orderExecutionRouter bbgo.Or
 			}
 
 			accumulativeBidQuantity += bidQuantity
-			bidPrice := aggregatePrice(sourceBook.SideBook(types.SideTypeBuy), accumulativeBidQuantity)
-			bidPrice = bidPrice.MulFloat64(1.0 - bidMargin.Float64())
+			if s.UseDepthPrice {
+				bidPrice = aggregatePrice(sourceBook.SideBook(types.SideTypeBuy), accumulativeBidQuantity)
+			}
 
+			bidPrice = bidPrice.MulFloat64(1.0 - bidMargin.Float64())
 			if i > 0 && pips > 0 {
 				bidPrice -= pips.MulFloat64(s.makerMarket.TickSize)
 			}
@@ -400,7 +407,10 @@ func (s *Strategy) updateQuote(ctx context.Context, orderExecutionRouter bbgo.Or
 			}
 			accumulativeAskQuantity += askQuantity
 
-			askPrice := aggregatePrice(sourceBook.SideBook(types.SideTypeSell), accumulativeAskQuantity)
+			if s.UseDepthPrice {
+				askPrice = aggregatePrice(sourceBook.SideBook(types.SideTypeSell), accumulativeAskQuantity)
+			}
+
 			askPrice = askPrice.MulFloat64(1.0 + askMargin.Float64())
 			if i > 0 && pips > 0 {
 				askPrice -= pips.MulFloat64(s.makerMarket.TickSize)
@@ -410,6 +420,7 @@ func (s *Strategy) updateQuote(ctx context.Context, orderExecutionRouter bbgo.Or
 				// if we bought, then we need to sell the base from the hedge session
 				submitOrders = append(submitOrders, types.SubmitOrder{
 					Symbol:      s.Symbol,
+					Market:      s.makerMarket,
 					Type:        types.OrderTypeLimit,
 					Side:        types.SideTypeSell,
 					Price:       askPrice.Float64(),
@@ -481,7 +492,7 @@ func (s *Strategy) Hedge(ctx context.Context, pos fixedpoint.Value) {
 
 	notional := quantity.MulFloat64(lastPrice)
 	if notional.Float64() <= s.sourceMarket.MinNotional {
-		log.Warnf("%s %f less than min notional, skipping", s.Symbol, notional.Float64())
+		log.Warnf("%s %f less than min notional, skipping hedge", s.Symbol, notional.Float64())
 		return
 	}
 
@@ -513,6 +524,7 @@ func (s *Strategy) Hedge(ctx context.Context, pos fixedpoint.Value) {
 
 	orderExecutor := &bbgo.ExchangeOrderExecutor{Session: s.sourceSession}
 	returnOrders, err := orderExecutor.SubmitOrders(ctx, types.SubmitOrder{
+		Market:   s.sourceMarket,
 		Symbol:   s.Symbol,
 		Type:     types.OrderTypeMarket,
 		Side:     side,

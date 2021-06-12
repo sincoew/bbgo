@@ -286,7 +286,7 @@ func (e *Exchange) CancelOrders(ctx context.Context, orders ...types.Order) (err
 		var req = e.client.OrderService.NewOrderCancelRequest()
 		if o.OrderID > 0 {
 			req.ID(o.OrderID)
-		} else if len(o.ClientOrderID) > 0 {
+		} else if len(o.ClientOrderID) > 0 && o.ClientOrderID != types.NoClientOrderID {
 			req.ClientOrderID(o.ClientOrderID)
 		} else {
 			return fmt.Errorf("order id or client order id is not defined, order=%+v", o)
@@ -310,8 +310,6 @@ func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
 		return nil, err
 	}
 
-	clientOrderID := NewClientOrderID(o.ClientOrderID)
-
 	volumeInString := o.QuantityString
 	//priceInString := o.PriceString
 	log.Infof("@ pkg/exchange/max/exchange.go [ toMaxSubmitOrder ] QuantityString=%s", o.QuantityString)
@@ -320,7 +318,7 @@ func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
 		if o.Market.Symbol != "" {
 			volumeInString = o.Market.FormatQuantity(o.Quantity)
 		} else {
-			volumeInString = strconv.FormatFloat(o.Quantity, 'f', 8, 64)
+			volumeInString = strconv.FormatFloat(o.Quantity, 'f', -1, 64)
 		}
 	}
 	log.Infof("@ pkg/exchange/max/exchange.go [ toMaxSubmitOrder ] volumeInString=%s", volumeInString)
@@ -329,10 +327,17 @@ func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
 		Market:    symbol,
 		Side:      toLocalSideType(o.Side),
 		OrderType: orderType,
-		//Price:     priceInString,
-		Volume:    volumeInString,
-		GroupID:   o.GroupID,
-		ClientOID: clientOrderID,
+		// Price:     priceInString,
+		Volume: volumeInString,
+	}
+
+	if o.GroupID > 0 {
+		maxOrder.GroupID = o.GroupID
+	}
+
+	clientOrderID := NewClientOrderID(o.ClientOrderID)
+	if len(clientOrderID) > 0 {
+		maxOrder.ClientOID = clientOrderID
 	}
 
 	switch o.Type {
@@ -342,7 +347,7 @@ func toMaxSubmitOrder(o types.SubmitOrder) (*maxapi.Order, error) {
 			if o.Market.Symbol != "" {
 				priceInString = o.Market.FormatPrice(o.Price)
 			} else {
-				priceInString = strconv.FormatFloat(o.Price, 'f', 8, 64)
+				priceInString = strconv.FormatFloat(o.Price, 'f', -1, 64)
 			}
 		}
 		maxOrder.Price = priceInString
@@ -412,9 +417,10 @@ func (e *Exchange) Withdrawal(ctx context.Context, asset string, amount fixedpoi
 }
 
 func (e *Exchange) SubmitOrders(ctx context.Context, orders ...types.SubmitOrder) (createdOrders types.OrderSlice, err error) {
-	log.Infof("@ pkg/exchange/max/exchange.go [ SubmitOrders ] ")
 
-	if len(orders) <= 10 {
+	log.Infof("@ pkg/exchange/max/exchange.go [ SubmitOrders ] ")
+	if len(orders) > 1 && len(orders) < 15 {
+
 		var ordersBySymbol = map[string][]maxapi.Order{}
 		for i, o := range orders {
 			log.Infof("@ pkg/exchange/max/exchange.go [ SubmitOrders ] o= %d , Quantity=%f", i, o.Quantity)
@@ -466,12 +472,14 @@ func (e *Exchange) SubmitOrders(ctx context.Context, orders ...types.SubmitOrder
 			return createdOrders, err
 		}
 
-		// TODO: replace OrderType string type
 		req := e.client.OrderService.NewCreateOrderRequest().
 			Market(maxOrder.Market).
 			Side(maxOrder.Side).
-			OrderType(string(maxOrder.OrderType)).
-			ClientOrderID(maxOrder.ClientOID)
+			OrderType(string(maxOrder.OrderType))
+
+		if len(maxOrder.ClientOID) > 0 {
+			req.ClientOrderID(maxOrder.ClientOID)
+		}
 
 		if len(maxOrder.Volume) > 0 {
 			req.Volume(maxOrder.Volume)

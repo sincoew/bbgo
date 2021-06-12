@@ -40,11 +40,11 @@ func (t *MarginOrderSideEffectType) UnmarshalJSON(data []byte) error {
 		*t = SideEffectTypeNoSideEffect
 		return nil
 
-	case string(SideEffectTypeMarginBuy), "borrow", "marginBuy":
+	case string(SideEffectTypeMarginBuy), "BORROW", "MARGINBUY":
 		*t = SideEffectTypeMarginBuy
 		return nil
 
-	case string(SideEffectTypeAutoRepay), "repay", "autoRepay":
+	case string(SideEffectTypeAutoRepay), "REPAY", "AUTOREPAY":
 		*t = SideEffectTypeAutoRepay
 		return nil
 
@@ -78,6 +78,8 @@ func (t *OrderType) Scan(v interface{}) error {
 	return nil
 }
 */
+
+const NoClientOrderID = "0"
 
 type OrderStatus string
 

@@ -37,13 +37,17 @@ func init() {
 type Exchange struct {
 	types.MarginSettings
 
-	Client *binance.Client
+	key, secret string
+	Client      *binance.Client
 }
 
 func New(key, secret string) *Exchange {
 	var client = binance.NewClient(key, secret)
 	_, _ = client.NewSetServerTimeService().Do(context.Background())
 	return &Exchange{
+		key:    key,
+		secret: secret,
+
 		Client: client,
 	}
 }
@@ -518,16 +522,12 @@ func (e *Exchange) submitMarginOrder(ctx context.Context, order types.SubmitOrde
 		return nil, err
 	}
 
-	clientOrderID := uuid.New().String()
-	if len(order.ClientOrderID) > 0 {
-		clientOrderID = order.ClientOrderID
-	}
-
 	req := e.Client.NewCreateMarginOrderService().
 		Symbol(order.Symbol).
 		Type(orderType).
 		Side(binance.SideType(order.Side))
 
+	clientOrderID := newSpotClientOrderID(order.ClientOrderID)
 	if len(clientOrderID) > 0 {
 		req.NewClientOrderID(clientOrderID)
 	}
@@ -614,6 +614,10 @@ func (e *Exchange) submitMarginOrder(ctx context.Context, order types.SubmitOrde
 const spotBrokerID = "NSUYEBKM"
 
 func newSpotClientOrderID(originalID string) (clientOrderID string) {
+	if originalID == types.NoClientOrderID {
+		return ""
+	}
+
 	prefix := "x-" + spotBrokerID
 	prefixLen := len(prefix)
 
@@ -642,12 +646,15 @@ func (e *Exchange) submitSpotOrder(ctx context.Context, order types.SubmitOrder)
 		return nil, err
 	}
 
-	clientOrderID := newSpotClientOrderID(order.ClientOrderID)
 	req := e.Client.NewCreateOrderService().
 		Symbol(order.Symbol).
 		Side(binance.SideType(order.Side)).
-		NewClientOrderID(clientOrderID).
 		Type(orderType)
+
+	clientOrderID := newSpotClientOrderID(order.ClientOrderID)
+	if len(clientOrderID) > 0 {
+		req.NewClientOrderID(clientOrderID)
+	}
 
 	if len(order.QuantityString) > 0 {
 		req.Quantity(order.QuantityString)
@@ -782,20 +789,22 @@ func (e *Exchange) QueryKLines(ctx context.Context, symbol string, interval type
 	var kLines []types.KLine
 	for _, k := range resp {
 		kLines = append(kLines, types.KLine{
-			Exchange:       types.ExchangeBinance,
-			Symbol:         symbol,
-			Interval:       interval,
-			StartTime:      time.Unix(0, k.OpenTime*int64(time.Millisecond)),
-			EndTime:        time.Unix(0, k.CloseTime*int64(time.Millisecond)),
-			Open:           util.MustParseFloat(k.Open),
-			Close:          util.MustParseFloat(k.Close),
-			High:           util.MustParseFloat(k.High),
-			Low:            util.MustParseFloat(k.Low),
-			Volume:         util.MustParseFloat(k.Volume),
-			QuoteVolume:    util.MustParseFloat(k.QuoteAssetVolume),
-			LastTradeID:    0,
-			NumberOfTrades: uint64(k.TradeNum),
-			Closed:         true,
+			Exchange:                 types.ExchangeBinance,
+			Symbol:                   symbol,
+			Interval:                 interval,
+			StartTime:                time.Unix(0, k.OpenTime*int64(time.Millisecond)),
+			EndTime:                  time.Unix(0, k.CloseTime*int64(time.Millisecond)),
+			Open:                     util.MustParseFloat(k.Open),
+			Close:                    util.MustParseFloat(k.Close),
+			High:                     util.MustParseFloat(k.High),
+			Low:                      util.MustParseFloat(k.Low),
+			Volume:                   util.MustParseFloat(k.Volume),
+			QuoteVolume:              util.MustParseFloat(k.QuoteAssetVolume),
+			TakerBuyBaseAssetVolume:  util.MustParseFloat(k.TakerBuyBaseAssetVolume),
+			TakerBuyQuoteAssetVolume: util.MustParseFloat(k.TakerBuyQuoteAssetVolume),
+			LastTradeID:              0,
+			NumberOfTrades:           uint64(k.TradeNum),
+			Closed:                   true,
 		})
 	}
 	return kLines, nil
@@ -897,4 +906,21 @@ func (e *Exchange) BatchQueryKLines(ctx context.Context, symbol string, interval
 	}
 
 	return allKLines, nil
+}
+
+func (e *Exchange) QueryLastFundingRate(ctx context.Context, symbol string) (fixedpoint.Value, error) {
+	futuresClient := binance.NewFuturesClient(e.key, e.secret)
+	rates, err := futuresClient.NewFundingRateService().
+		Symbol(symbol).
+		Limit(1).
+		Do(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(rates) == 0 {
+		return 0, errors.New("empty funding rate data")
+	}
+
+	return fixedpoint.NewFromString(rates[0].FundingRate)
 }
