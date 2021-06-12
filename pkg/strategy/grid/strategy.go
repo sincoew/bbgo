@@ -345,7 +345,7 @@ func (s *Strategy) placeGridBuyOrders(orderExecutor bbgo.OrderExecutor, session 
 }
 
 func (s *Strategy) placeGridOrders(orderExecutor bbgo.OrderExecutor, session *bbgo.ExchangeSession) {
-	log.Infof("placing grid orders on side %s...", s.Side)
+	log.Infof("@ pkg/strategy/grid/strategy.go -> placing grid orders on side %s...", s.Side)
 
 	switch s.Side {
 
@@ -504,6 +504,7 @@ func (s *Strategy) Subscribe(session *bbgo.ExchangeSession) {
 }
 
 func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, session *bbgo.ExchangeSession) error {
+	log.Infof("@ pkg/strategy/grid/strategy.go -> Run")
 	
   // do some basic validation
 	if s.GridNum == 0 {
