@@ -23,7 +23,7 @@ import (
 	"github.com/c9s/bbgo/pkg/types"
 )
 
-const DefaultBindAddress = "localhost:8080"
+const DefaultBindAddress = "localhost:9527"
 
 type Setup struct {
 	// Context is the trader context
@@ -251,7 +251,7 @@ func (s *Server) Run(ctx context.Context, bindArgs ...string) error {
 	r := s.newEngine()
 	bind := resolveBind(bindArgs)
 	if s.OpenInBrowser {
-		
+
 		openBrowser(ctx, bind)
 	}
 

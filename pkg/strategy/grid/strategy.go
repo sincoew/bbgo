@@ -505,7 +505,7 @@ func (s *Strategy) Subscribe(session *bbgo.ExchangeSession) {
 
 func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, session *bbgo.ExchangeSession) error {
 	log.Infof("@ pkg/strategy/grid/strategy.go -> Run")
-	
+
   // do some basic validation
 	if s.GridNum == 0 {
 		s.GridNum = 10
@@ -547,6 +547,7 @@ func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, se
 		}
 	}
 
+	//Arbitrage
 	if s.state.ArbitrageOrders == nil {
 		s.state.ArbitrageOrders = make(map[uint64]types.Order)
 	}
