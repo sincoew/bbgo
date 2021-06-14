@@ -374,6 +374,7 @@ func (s *Strategy) placeGridOrders(orderExecutor bbgo.OrderExecutor, session *bb
 }
 
 func (s *Strategy) tradeUpdateHandler(trade types.Trade) {
+
 	if trade.Symbol != s.Symbol {
 		return
 	}
@@ -506,7 +507,7 @@ func (s *Strategy) Subscribe(session *bbgo.ExchangeSession) {
 func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, session *bbgo.ExchangeSession) error {
 	log.Infof("@ pkg/strategy/grid/strategy.go -> Run")
 
-  // do some basic validation
+	// do some basic validation
 	if s.GridNum == 0 {
 		s.GridNum = 10
 	}
@@ -557,7 +558,15 @@ func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, se
 	s.orderStore = bbgo.NewOrderStore(s.Symbol)
 	s.orderStore.BindStream(session.UserDataStream)
 
-	// we don't persist orders so that we can not clear the previous orders for now. just need time to support this.
+	//ROBOT TEST
+	session.UserDataStream.OnOrderUpdate(func(order types.Order) {
+		s.Notify("## 1 ## order.Symbol ##=%s", order.Symbol)
+	})
+	session.UserDataStream.OnOrderUpdate(func(order types.Order) {
+		s.Notify("## 2 ## order.Symbol ##=%s", order.Symbol)
+	})
+
+	// we don't persist orders so tha t we can not clear the previous orders for now. just need time to support this.
 	s.activeOrders = bbgo.NewLocalActiveOrderBook()
 	s.activeOrders.OnFilled(s.handleFilledOrder)
 	s.activeOrders.BindStream(session.UserDataStream)

@@ -1,0 +1,1 @@
+/bin/bash -c 'source /home/robert/Documents/blockchain/bbgo/.env.local && /home/robert/Documents/blockchain/bbgo/bbgo run --enable-web-server --webserver-bind :9527 --config /home/robert/Documents/blockchain/bbgo/bbgo.yaml'

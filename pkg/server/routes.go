@@ -23,7 +23,7 @@ import (
 	"github.com/c9s/bbgo/pkg/types"
 )
 
-const DefaultBindAddress = "localhost:9527"
+const DefaultBindAddress = "122.117.148.105:9527"
 
 type Setup struct {
 	// Context is the trader context
@@ -256,6 +256,7 @@ func (s *Server) Run(ctx context.Context, bindArgs ...string) error {
 	}
 
 	s.srv = newServer(r, bind)
+	logrus.Infof("@ pkg/server/routes.go -> newServer = %s...", bind)
 	return listenAndServe(s.srv)
 }
 
