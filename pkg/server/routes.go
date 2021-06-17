@@ -23,7 +23,7 @@ import (
 	"github.com/c9s/bbgo/pkg/types"
 )
 
-const DefaultBindAddress = "122.117.148.105:9527"
+const DefaultBindAddress = "localhost:9527"
 
 type Setup struct {
 	// Context is the trader context
