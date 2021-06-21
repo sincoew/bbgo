@@ -119,12 +119,13 @@ var executeOrderCmd = &cobra.Command{
 	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
-
+		log.Infof("@ pkg/cmd/orders.go  listOrdersCmd [RunE] [placeorder]")
 		if userConfig == nil {
 			return errors.New("config file is required")
 		}
 
 		sessionName, err := cmd.Flags().GetString("session")
+
 		if err != nil {
 			return err
 		}
@@ -330,6 +331,7 @@ var submitOrderCmd = &cobra.Command{
 			Market:         market,
 			TimeInForce:    "GTC",
 		}
+		log.Infof("@ pkg/cmd/orders.go  [session.Exchange.SubmitOrders] Quantity=%f, price=%f", util.MustParseFloat(quantity), util.MustParseFloat(price))
 
 		co, err := session.Exchange.SubmitOrders(ctx, so)
 		if err != nil {

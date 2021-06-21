@@ -109,6 +109,7 @@ func init() {
 }
 
 func Execute() {
+	log.Infof("@ pkg/cmd/root/execute ... [ Init cmd ]")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
 
 	// Enable environment variable binding, the env vars are not overloaded yet.

@@ -1,0 +1,50 @@
+# 建立 MAX 交易所的連線
+sessions:
+  max:
+    exchange: max
+    envVarPrefix: max
+
+persistence:
+  json:
+    directory: var/data
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    db: 0
+
+# 風險控管
+riskControls:
+  # 基於連線的風險控管
+  sessionBased:
+    # 設定 MAX 交易所連線的下單風控
+    max:
+      orderExecutor:
+        # 依照市場不同設定不同的風控
+        bySymbol:
+          BTCUSDT:
+            # basic risk control order executor
+            basic:
+              # 花到剩下 100.0 USDT 就不再繼續下單
+              minQuoteBalance: 10.0
+
+              # 最多買到 3.0 顆 BTC 不可多買
+              maxBaseAssetBalance: 1.0
+
+              # 最少要保留 0.1 顆 BTC 不可多賣
+              minBaseAssetBalance: 0.1
+
+              # 下單金額最高不超過 1000.0 USDT
+              maxOrderAmount: 10.0
+
+exchangeStrategies:
+- on: max
+  grid:
+    symbol: USDTTWD
+    quantity: 10.0
+    gridNumber: 15
+    profitSpread: 0.1
+    upperPrice: 28.0
+    lowerPrice: 27.0
+    side: buy
+    catchUp: true
+    long: true

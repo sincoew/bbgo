@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"fmt"
+	"github.com/c9s/bbgo/pkg/bbgo"
+	"github.com/c9s/bbgo/pkg/cmd/cmdutil"
+	"github.com/c9s/bbgo/pkg/server"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
-
-	"github.com/c9s/bbgo/pkg/bbgo"
-	"github.com/c9s/bbgo/pkg/cmd/cmdutil"
-	"github.com/c9s/bbgo/pkg/server"
 )
 
 func init() {
@@ -43,6 +43,7 @@ var RunCmd = &cobra.Command{
 }
 
 func runSetup(baseCtx context.Context, userConfig *bbgo.Config, enableApiServer bool) error {
+	log.Infof("@ pkg/cmd/run [runSetup] enableApiServer = %v", enableApiServer)
 	ctx, cancelTrading := context.WithCancel(baseCtx)
 	defer cancelTrading()
 
@@ -119,32 +120,45 @@ func BootstrapEnvironment(ctx context.Context, environ *bbgo.Environment, userCo
 }
 
 func runConfig(basectx context.Context, userConfig *bbgo.Config, enableWebServer bool, webServerBind string) error {
+	log.Infof("@ pkg/cmd/run [runConfig] enableWebServer = %v", enableWebServer)
 	ctx, cancelTrading := context.WithCancel(basectx)
+
 	defer cancelTrading()
 
+	fmt.Println("@@@@ run start ")
 	environ := bbgo.NewEnvironment()
 	if err := BootstrapEnvironment(ctx, environ, userConfig); err != nil {
+		fmt.Println("@@@@ run boot error ")
 		return err
 	}
+	fmt.Println("@@@@ run NewEnvironment end ")
 
 	if err := environ.Init(ctx); err != nil {
 		return err
 	}
 
 	if err := environ.Sync(ctx); err != nil {
+		fmt.Println("@@@@ run env.sync error ")
 		return err
 	}
+
+	fmt.Println("@@@@ run environ.Sync end ")
 
 	trader := bbgo.NewTrader(environ)
 	if err := trader.Configure(userConfig); err != nil {
+		fmt.Println("@@@@ run trader.config error ")
 		return err
 	}
+	fmt.Println("@@@@ run bbgo.NewTrader end ")
 
 	if err := trader.Run(ctx); err != nil {
+		fmt.Println("@@@@ run trader error ")
 		return err
 	}
 
+	log.Infof("@ pkg/cmd/run [enableWebServer] = %v", enableWebServer)
 	if enableWebServer {
+
 		go func() {
 			s := &server.Server{
 				Config:  userConfig,
@@ -170,6 +184,7 @@ func runConfig(basectx context.Context, userConfig *bbgo.Config, enableWebServer
 }
 
 func run(cmd *cobra.Command, args []string) error {
+	fmt.Println("@@@@ run @@@@")
 	setup, err := cmd.Flags().GetBool("setup")
 	if err != nil {
 		return err

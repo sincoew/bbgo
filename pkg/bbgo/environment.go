@@ -145,6 +145,7 @@ func (environ *Environment) ConfigureDatabase(ctx context.Context) error {
 }
 
 func (environ *Environment) ConfigureDatabaseDriver(ctx context.Context, driver string, dsn string) error {
+	log.Infof("@ pkg/bbgo/environment.go ConfigureDatabaseDriver = %s", driver)
 	environ.DatabaseService = service.NewDatabaseService(driver, dsn)
 	err := environ.DatabaseService.Connect()
 	if err != nil {
@@ -437,18 +438,18 @@ func (environ *Environment) Connect(ctx context.Context) error {
 		} else {
 			// add the subscribe requests to the stream
 			for _, s := range session.Subscriptions {
-				logger.Infof("subscribing %s %s %v", s.Symbol, s.Channel, s.Options)
+				logger.Infof("@@ pkg/bbgo/environment.go -> Connect, session.Subscriptions %s %s %v", s.Symbol, s.Channel, s.Options)
 				session.MarketDataStream.Subscribe(s.Channel, s.Symbol, s.Options)
 			}
 		}
 
-		logger.Infof("connecting %s market data stream...", session.Name)
+		logger.Infof("@@ pkg/bbgo/environment.go -> connecting %s market data stream...", session.Name)
 		if err := session.MarketDataStream.Connect(ctx); err != nil {
 			return err
 		}
 
 		if !session.PublicOnly {
-			logger.Infof("connecting %s user data stream...", session.Name)
+			logger.Infof("@@ pkg/bbgo/environment.go -> connecting %s user data stream...", session.Name)
 			if err := session.UserDataStream.Connect(ctx); err != nil {
 				return err
 			}

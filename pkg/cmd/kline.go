@@ -59,7 +59,7 @@ var klineCmd = &cobra.Command{
 			log.Infof("kline: %s", kline.String())
 		})
 
-		log.Infof("connecting...")
+		log.Infof("@ pkg/cmd/kline.go cobra.Command ex.NewStream connect")
 		if err := s.Connect(ctx); err != nil {
 			return fmt.Errorf("failed to connect to %s", exchangeName)
 		}

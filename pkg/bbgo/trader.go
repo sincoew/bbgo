@@ -169,16 +169,24 @@ func (trader *Trader) SetRiskControls(riskControls *RiskControls) {
 
 func (trader *Trader) Subscribe() {
 	// pre-subscribe the data
+	fmt.Println("@@@@ Subscribe ")
+
 	for sessionName, strategies := range trader.exchangeStrategies {
+		fmt.Println("@@@@ Subscribe sessionName =", sessionName)
 		session := trader.environment.sessions[sessionName]
 		for _, strategy := range strategies {
+			fmt.Println("@@@@ Subscribe strategy ...")
 			if subscriber, ok := strategy.(ExchangeSessionSubscriber); ok {
+				fmt.Println("@@@@ subscribe in ...")
 				subscriber.Subscribe(session)
 			} else {
+				fmt.Println("@@@@ Subscribe strategy error = id = ", strategy.ID())
 				log.Errorf("strategy %s does not implement ExchangeSessionSubscriber", strategy.ID())
 			}
 		}
 	}
+
+	fmt.Println("@@@@ Subscribe end")
 
 	for _, strategy := range trader.crossExchangeStrategies {
 		if subscriber, ok := strategy.(CrossExchangeSessionSubscriber); ok {
@@ -190,6 +198,7 @@ func (trader *Trader) Subscribe() {
 }
 
 func (trader *Trader) RunSingleExchangeStrategy(ctx context.Context, strategy SingleExchangeStrategy, session *ExchangeSession, orderExecutor OrderExecutor) error {
+	log.Infof("pkg/bbgo/trader.go -> trader.go -> RunSingleExchangeStrategy")
 	rs := reflect.ValueOf(strategy)
 
 	// get the struct element
@@ -249,6 +258,7 @@ func (trader *Trader) RunSingleExchangeStrategy(ctx context.Context, strategy Si
 		}
 	}
 
+	log.Infof("pkg/bbgo/trader.go -> trader.go -> RunSingleExchangeStrategy, strategy.Run()")
 	return strategy.Run(ctx, orderExecutor, session)
 }
 
@@ -274,6 +284,7 @@ func (trader *Trader) getSessionOrderExecutor(sessionName string) OrderExecutor 
 }
 
 func (trader *Trader) RunAllSingleExchangeStrategy(ctx context.Context) error {
+	log.Infof("pkg/bbgo/trader.go -> trader.go -> RunAllSingleExchangeStrategy")
 	// load and run Session strategies
 	for sessionName, strategies := range trader.exchangeStrategies {
 		var session = trader.environment.sessions[sessionName]
@@ -289,6 +300,7 @@ func (trader *Trader) RunAllSingleExchangeStrategy(ctx context.Context) error {
 }
 
 func (trader *Trader) Run(ctx context.Context) error {
+	log.Infof("pkg/bbgo/trader.go -> trader.go -> Run()")
 	trader.Subscribe()
 
 	if err := trader.environment.Start(ctx); err != nil {
