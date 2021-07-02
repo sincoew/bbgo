@@ -545,7 +545,8 @@ helm delete bbgo-$INSTANCE
 ## Development
 
 The overview function flow at bbgo
-![image info](./assets/bbgo_overview.svg)
+![image info](./assets/overview.svg)
+
 
 ### Setting up your local repository
 
