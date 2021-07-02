@@ -1,9 +1,8 @@
-package grid
+package empathy
 
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -15,7 +14,7 @@ import (
 	"github.com/c9s/bbgo/pkg/types"
 )
 
-const ID = "grid"
+const ID = "empathy"
 
 var log = logrus.WithField("strategy", ID)
 
@@ -505,7 +504,7 @@ func (s *Strategy) Subscribe(session *bbgo.ExchangeSession) {
 }
 
 func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, session *bbgo.ExchangeSession) error {
-	log.Infof("@ pkg/strategy/grid/strategy.go -> Run")
+	log.Infof("@ pkg/strategy/empathy/strategy.go -> Run")
 
 	// do some basic validation
 	if s.GridNum == 0 {
@@ -558,69 +557,69 @@ func (s *Strategy) Run(ctx context.Context, orderExecutor bbgo.OrderExecutor, se
 	s.orderStore = bbgo.NewOrderStore(s.Symbol)
 	s.orderStore.BindStream(session.UserDataStream)
 
-	//ROBOT TEST
-	session.UserDataStream.OnOrderUpdate(func(order types.Order) {
-		s.Notify("## 1 ## order.Symbol ##=%s", order.Symbol)
-	})
+	// //ROBOT TEST
+	// session.UserDataStream.OnOrderUpdate(func(order types.Order) {
+	// 	s.Notify("## 1 ## order.Symbol ##=%s", order.Symbol)
+	// })
 
 	// session.UserDataStream.OnOrderUpdate(func(order types.Order) {
 	// 	s.Notify("## 2 ## order.Symbol ##=%s", order.Symbol)
 	// })
-	// session.MarketDataStream.OnKLine(func(kline types.KLine) {
-	// 	s.Notify("## 3 ## MarketDataStream.OnKLine ##High=%f   ##Low=%f", kline.High, kline.Low)
-	// })
+	session.MarketDataStream.OnKLine(func(kline types.KLine) {
+		s.Notify("## 1 ## MarketDataStream.OnKLine ##High=%f   ##Low=%f", kline.High, kline.Low)
+	})
 
 	// session.MarketDataStream.OnKLineClosed(func(kline types.KLine) {
 	// 	s.Notify("## 3 ## MarketDataStream.OnKLineClosed ##High=%f   ##Low=%f", kline.High, kline.Low)
 	// })
 
 	// we don't persist orders so tha t we can not clear the previous orders for now. just need time to support this.
-	s.activeOrders = bbgo.NewLocalActiveOrderBook()
-	s.activeOrders.OnFilled(s.handleFilledOrder)
-	s.activeOrders.BindStream(session.UserDataStream)
+	// s.activeOrders = bbgo.NewLocalActiveOrderBook()
+	// s.activeOrders.OnFilled(s.handleFilledOrder)
+	// s.activeOrders.BindStream(session.UserDataStream)
 
-	s.Graceful.OnShutdown(func(ctx context.Context, wg *sync.WaitGroup) {
-		defer wg.Done()
+	// s.Graceful.OnShutdown(func(ctx context.Context, wg *sync.WaitGroup) {
+	// 	defer wg.Done()
 
-		if s.Persistence != nil {
-			log.Infof("backing up grid state...")
-			submitOrders := s.activeOrders.Backup()
-			s.state.Orders = submitOrders
-			if err := s.Persistence.Save(s.state, ID, instanceID); err != nil {
-				log.WithError(err).Error("can not save active order backups")
-			} else {
-				log.Infof("active order snapshot saved")
-			}
-		}
+	// 	if s.Persistence != nil {
+	// 		log.Infof("backing up grid state...")
+	// 		submitOrders := s.activeOrders.Backup()
+	// 		s.state.Orders = submitOrders
+	// 		if err := s.Persistence.Save(s.state, ID, instanceID); err != nil {
+	// 			log.WithError(err).Error("can not save active order backups")
+	// 		} else {
+	// 			log.Infof("active order snapshot saved")
+	// 		}
+	// 	}
 
-		log.Infof("canceling active orders...")
-		if err := session.Exchange.CancelOrders(ctx, s.activeOrders.Orders()...); err != nil {
-			log.WithError(err).Errorf("cancel order error")
-		}
-	})
+	// 	log.Infof("canceling active orders...")
+	// 	if err := session.Exchange.CancelOrders(ctx, s.activeOrders.Orders()...); err != nil {
+	// 		log.WithError(err).Errorf("cancel order error")
+	// 	}
+	// })
 
-	session.UserDataStream.OnTradeUpdate(s.tradeUpdateHandler)
+	// session.UserDataStream.OnTradeUpdate(s.tradeUpdateHandler)
 
 	session.UserDataStream.OnStart(func() {
 		if stateLoaded && len(s.state.Orders) > 0 {
-			createdOrders, err := orderExecutor.SubmitOrders(ctx, s.state.Orders...)
-			if err != nil {
-				log.WithError(err).Error("active orders restore error")
-			}
-			s.activeOrders.Add(createdOrders...)
-			s.orderStore.Add(createdOrders...)
+			//createdOrders, err := orderExecutor.SubmitOrders(ctx, s.state.Orders...)
+			// if err != nil {
+			// 	log.WithError(err).Error("active orders restore error")
+			// }
+			//s.activeOrders.Add(createdOrders...)
+			//s.orderStore.Add(createdOrders...)
 		} else {
-			s.placeGridOrders(orderExecutor, session)
+			//s.placeGridOrders(orderExecutor, session)
 		}
 	})
 
-	if s.CatchUp {
-		session.MarketDataStream.OnKLineClosed(func(kline types.KLine) {
-			log.Infof("catchUp mode is enabled, updating grid orders...")
-			// update grid
-			s.placeGridOrders(orderExecutor, session)
-		})
-	}
+	// if s.CatchUp {
+	// 	session.MarketDataStream.OnKLineClosed(func(kline types.KLine) {
+	// 		log.Infof("catchUp mode is enabled, updating grid orders...")
+	// 		// update grid
+	// 		s.placeGridOrders(orderExecutor, session)
+	// 	})
+	// }
 
 	return nil
 }

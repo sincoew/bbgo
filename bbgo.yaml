@@ -38,7 +38,7 @@ riskControls:
 
 exchangeStrategies:
 - on: max
-  grid:
+  empathy:
     symbol: USDTTWD
     quantity: 10.0
     gridNumber: 15
