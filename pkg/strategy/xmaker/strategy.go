@@ -85,6 +85,10 @@ func (s *ProfitStats) AddProfit(profit, netProfit fixedpoint.Value) {
 }
 
 func (s *ProfitStats) AddTrade(trade types.Trade) {
+	if s.IsOver24Hours() {
+		s.ResetToday()
+	}
+
 	if trade.Exchange == s.MakerExchange {
 		s.AccumulatedMakerVolume.AtomicAdd(fixedpoint.NewFromFloat(trade.Quantity))
 		s.TodayMakerVolume.AtomicAdd(fixedpoint.NewFromFloat(trade.Quantity))
@@ -104,7 +108,7 @@ func (s *ProfitStats) AddTrade(trade types.Trade) {
 }
 
 func (s *ProfitStats) IsOver24Hours() bool {
-	return time.Now().Sub(time.Unix(s.TodaySince, 0)) >= 24*time.Hour
+	return time.Since(time.Unix(s.TodaySince, 0)) > 24*time.Hour
 }
 
 func (s *ProfitStats) ResetToday() {
